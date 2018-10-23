@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	mazeEnd = "2.00"
+	searchErrorMsg = "there is not a possible route between those nodes"
 )
 
 // DataStructure depends on the algorithm used
@@ -36,10 +36,9 @@ func BlindSearch(nodes []string, weights [][]float64, dStruct DataStructure, lim
 	)
 
 	if nodes == nil {
-		root, err = getMazeStart(weights)
-		end = mazeEnd
+		root, end, err = getMazeStart(weights)
 	} else {
-		root, end = getGraphStartAndEnd(nodes)
+		root, end, err = getGraphStartAndEnd(nodes)
 	}
 
 	if err != nil {
@@ -78,48 +77,62 @@ func BlindSearch(nodes []string, weights [][]float64, dStruct DataStructure, lim
 		}
 	}
 
-	return fmt.Errorf("the destination was not found")
+	return fmt.Errorf(searchErrorMsg)
 }
 
-func getMazeStart(weights [][]float64) (*MazeNode, error) {
-	start := GetOption(fmt.Sprintf("The map is %d rows long and %d columns long. Where would you like to start?", len(weights), len(weights[0])))
+func getMazeStart(weights [][]float64) (*MazeNode, string, error) {
+	start := GetOption("Where would you like to start?")
 	coords := strings.Split(start, ",")
 
-	row, err := strconv.Atoi(coords[0])
-	if err != nil {
-		return nil, err
+	rowStart, _ := strconv.Atoi(coords[0])
+	columnStart, _ := strconv.Atoi(coords[1])
+
+	rowStart--
+	columnStart--
+
+	end := GetOption("What position would you like to find?")
+	coords = strings.Split(end, ",")
+
+	rowEnd, _ := strconv.Atoi(coords[0])
+	columnEnd, _ := strconv.Atoi(coords[1])
+
+	rowEnd--
+	columnEnd--
+
+	end = fmt.Sprintf("%d,%d", rowEnd, columnEnd)
+
+	if rowStart >= len(weights) || columnStart >= len(weights[rowStart]) {
+		return nil, "", fmt.Errorf(searchErrorMsg)
 	}
 
-	column, err := strconv.Atoi(coords[1])
-	if err != nil {
-		return nil, err
-	}
+	valueStart := strconv.FormatFloat(weights[rowStart][columnStart], 'f', 2, 64)
 
-	row--
-	column--
-
-	value := strconv.FormatFloat(weights[row][column], 'f', 2, 64)
-
-	if value == "-1.00" {
-		return nil, fmt.Errorf("that position is an invalid block")
+	if valueStart == "-1.00" {
+		return nil, "", fmt.Errorf(searchErrorMsg)
 	}
 
 	return &MazeNode{
-		Row:    row,
-		Column: column,
-		Value:  value,
+		Row:    rowStart,
+		Column: columnStart,
+		Value:  valueStart,
 		Label:  0,
 		Level:  0,
-	}, nil
+	}, end, nil
 }
 
-func getGraphStartAndEnd(nodes []string) (*GraphNode, string) {
-	end := GetOption("Which airport would you like to find?")
+func getGraphStartAndEnd(nodes []string) (*GraphNode, string, error) {
+	start := GetOption("From which node would you like to start?")
+	end := GetOption("Which node would you like to find?")
+
+	startIndex := FindInSlice(nodes, start)
+	if startIndex == -1 {
+		return nil, "", fmt.Errorf(searchErrorMsg)
+	}
 
 	return &GraphNode{
-		Name:  nodes[0],
+		Name:  nodes[startIndex],
 		Index: 0,
 		Label: 0,
 		Level: 0,
-	}, end
+	}, end, nil
 }

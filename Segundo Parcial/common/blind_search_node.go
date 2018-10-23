@@ -141,7 +141,7 @@ func (m *MazeNode) AppendChildren(nodes []string, weights [][]float64, dStruct D
 
 // IsEnd if the ID is the same as the node's value
 func (m *MazeNode) IsEnd(id string) bool {
-	if m.Value == id {
+	if m.ID() == id {
 		return true
 	}
 
