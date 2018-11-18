@@ -40,16 +40,19 @@ public class Cell : MonoBehaviour {
     public int column;
 
     void Start() {
-        this.left = new Vector3(this.transform.position.x - (GameMaster.cellSize / 2f), this.transform.position.y);
+        this.left = new Vector3(this.transform.position.x - (GameMaster.cellSize / 2f), this.transform.position.y, 2f);
         this.right = this.left + (Vector3.right * GameMaster.cellSize);
 
-        this.bottom = new Vector3(this.transform.position.x, this.transform.position.y - (GameMaster.cellSize / 2f));
+        this.bottom = new Vector3(this.transform.position.x, this.transform.position.y - (GameMaster.cellSize / 2f), 2f);
         this.top = this.bottom + (Vector3.up * GameMaster.cellSize);
 
         this.verticalRotation = Quaternion.Euler(0, 0, 90);
     }
 
     void OnMouseOver() {
+        if (!GameMaster.isPlayerTurn)
+            return;
+
         CellSide side = this.GetSide();
         if (this.IsSideOccupied(side)) {
             if (this.playerHighlight != null)
@@ -59,9 +62,10 @@ public class Cell : MonoBehaviour {
         }
 
         GameObject prefab;
-        if(!GameMaster.isPlayerTurn) 
+        if(!GameMaster.isPlayerTurn) {
             prefab = this.aiHighlightPrefab;
-        else 
+            return;
+        } else 
             prefab = this.playerHighlightPrefab;
 
         LineTransform line = this.GetLineTransform(side);
@@ -70,6 +74,9 @@ public class Cell : MonoBehaviour {
     }
 
     void OnMouseDown() {
+        if (!GameMaster.isPlayerTurn)
+            return;
+
         CellSide side = this.GetSide();
         if (this.IsSideOccupied(side))
             return;
@@ -81,53 +88,18 @@ public class Cell : MonoBehaviour {
         GameObject prefab;
         if (GameMaster.isPlayerTurn)
             prefab = this.playerLinePrefab;
-        else
+        else {
             prefab = this.aiLinePrefab;
-
-        LineTransform line = this.GetLineTransform(side);
-
-        GameObject playerLine = Instantiate(prefab, line.Position, line.Rotation);
-
-        bool isNeighbourClosed = false;
-        switch(side) {
-            case CellSide.Left:
-                this.leftLine = playerLine;
-                if (this.column > 0)
-                    isNeighbourClosed = GameMaster.cells[this.row, this.column - 1].UpdateNeighbourSide(side, playerLine);
-                break;
-
-            case CellSide.Right:
-                this.rightLine = playerLine;
-                 if (this.column < GameMaster.cells.GetLength(0) - 1)
-                    isNeighbourClosed = GameMaster.cells[this.row, this.column + 1].UpdateNeighbourSide(side, playerLine);
-                break;
-
-            case CellSide.Bottom:
-                this.bottomLine = playerLine;
-                if (this.row < GameMaster.cells.GetLength(1) - 1)
-                    isNeighbourClosed = GameMaster.cells[this.row + 1, this.column].UpdateNeighbourSide(side, playerLine);
-                break;
-
-            default:
-                this.topLine = playerLine;
-                if (this.row > 0)
-                    isNeighbourClosed = GameMaster.cells[this.row - 1, this.column].UpdateNeighbourSide(side, playerLine);
-                break;
-        }
-
-        if (this.IsClosed()) {
-            this.SetOwner(GameMaster.isPlayerTurn);
             return;
         }
 
-        if (isNeighbourClosed) {
-            return;     
-        }
-
-        GameMaster.isPlayerTurn = !GameMaster.isPlayerTurn;
+        this.SelectSide(prefab, side);
     }
 
     void OnMouseExit() {
+        if (!GameMaster.isPlayerTurn)
+            return;
+
         if (this.playerHighlight != null) {
             Destroy(this.playerHighlight);
         }
@@ -157,7 +129,7 @@ public class Cell : MonoBehaviour {
         return side;
     }
 
-    private LineTransform GetLineTransform(CellSide side) {
+    public LineTransform GetLineTransform(CellSide side) {
         LineTransform line = new LineTransform();
 
         switch (side) {
@@ -215,7 +187,25 @@ public class Cell : MonoBehaviour {
         return false;
     }
 
-    private bool IsClosed() {
+    public List<CellSide> GetFreeSides() {
+        List<CellSide> sides = new List<CellSide>();
+
+        if (this.leftLine == null)
+            sides.Add(CellSide.Left);
+
+        if (this.rightLine == null)
+            sides.Add(CellSide.Right);
+
+        if (this.bottomLine == null)
+            sides.Add(CellSide.Bottom);
+
+        if (this.topLine == null)
+            sides.Add(CellSide.Top);
+
+        return sides;
+    }
+
+    public bool IsClosed() {
         return this.leftLine != null && this.rightLine != null &&
                    this.bottomLine != null && this.topLine != null;
     }
@@ -243,6 +233,57 @@ public class Cell : MonoBehaviour {
         }
 
         this.playerHighlight = Instantiate(prefab, line.Position, line.Rotation);
+        this.playerHighlight.transform.parent = GetComponent<Transform>();
+    }
+
+    public void DestroyHighlight() {
+        if (this.playerHighlight != null)
+            Destroy(this.playerHighlight);
+    }
+
+    public void SelectSide(GameObject prefab, CellSide side) {
+        LineTransform line = this.GetLineTransform(side);
+
+        GameObject playerLine = Instantiate(prefab, line.Position, line.Rotation);
+        playerLine.transform.parent = GetComponent<Transform>();
+
+        bool isNeighbourClosed = false;
+        switch(side) {
+            case CellSide.Left:
+                this.leftLine = playerLine;
+                if (this.column > 0)
+                    isNeighbourClosed = GameMaster.cells[this.row, this.column - 1].UpdateNeighbourSide(side, playerLine);
+                break;
+
+            case CellSide.Right:
+                this.rightLine = playerLine;
+                 if (this.column < GameMaster.cells.GetLength(0) - 1)
+                    isNeighbourClosed = GameMaster.cells[this.row, this.column + 1].UpdateNeighbourSide(side, playerLine);
+                break;
+
+            case CellSide.Bottom:
+                this.bottomLine = playerLine;
+                if (this.row < GameMaster.cells.GetLength(1) - 1)
+                    isNeighbourClosed = GameMaster.cells[this.row + 1, this.column].UpdateNeighbourSide(side, playerLine);
+                break;
+
+            default:
+                this.topLine = playerLine;
+                if (this.row > 0)
+                    isNeighbourClosed = GameMaster.cells[this.row - 1, this.column].UpdateNeighbourSide(side, playerLine);
+                break;
+        }
+
+        if (this.IsClosed()) {
+            this.SetOwner(GameMaster.isPlayerTurn);
+            return;
+        }
+
+        if (isNeighbourClosed) {
+            return;     
+        }
+
+        GameMaster.isPlayerTurn = !GameMaster.isPlayerTurn;
     }
 
     public bool UpdateNeighbourSide(CellSide side, GameObject line) {
@@ -270,5 +311,27 @@ public class Cell : MonoBehaviour {
         }
 
         return false;
+    }
+
+    public List<CellSide> GetValidNeighbourSides() {
+        List<CellSide> sides = new List<CellSide>();
+
+        if (this.leftLine == null)
+            if(this.column == 0 || GameMaster.cells[this.row, this.column - 1].GetFreeSides().Count > 2)
+                sides.Add(CellSide.Left);
+
+        if (this.rightLine == null)
+            if (this.column == GameMaster.cells.GetLength(0) - 1 || GameMaster.cells[this.row, this.column + 1].GetFreeSides().Count > 2)
+                sides.Add(CellSide.Right);
+
+        if (this.bottomLine == null)
+            if (this.row == GameMaster.cells.GetLength(1) - 1 || GameMaster.cells[this.row + 1, this.column].GetFreeSides().Count > 2)
+                sides.Add(CellSide.Bottom);
+
+        if (this.topLine == null)
+            if (this.row == 0 || GameMaster.cells[this.row - 1, this.column].GetFreeSides().Count > 2)
+                sides.Add(CellSide.Top);
+
+        return sides;
     }
 }

@@ -22,7 +22,7 @@ public class GameMaster : MonoBehaviour {
     private Cell cell;
 
     [SerializeField]
-    [Range(3, 10)]
+    [Range(2, 10)]
     private int gridSize;
 
     [SerializeField]
@@ -30,6 +30,18 @@ public class GameMaster : MonoBehaviour {
 
     [SerializeField]
     private Text aiScoreText;
+
+    [SerializeField]
+    private Text winnerText;
+
+    [SerializeField]
+    private GameObject squareParent;
+
+    [SerializeField]
+    private GameObject cellParent;
+
+    [SerializeField]
+    private GameObject resetButton;
 
     private float height;
     private float width;
@@ -44,13 +56,13 @@ public class GameMaster : MonoBehaviour {
 	void Start () {
         GameMaster.gameMaster = this;
 
-        if (Random.Range(0, 1000) > 499)
-            GameMaster.isPlayerTurn = true;
-
         this.Setup();
 	}
 	
     void Setup() {
+        if (Random.Range(0, 1000) > 499)
+            GameMaster.isPlayerTurn = true;
+
         this.height = this.mainCamera.orthographicSize * 2f;
         this.width = this.height * this.mainCamera.aspect;
 
@@ -69,6 +81,7 @@ public class GameMaster : MonoBehaviour {
             for (int j = 0; j <= this.gridSize; j++) {
                 GameObject newSquare = Instantiate(this.square, new Vector3(this.GetGridX(j), this.GetGridY(i)), Quaternion.identity);
                 newSquare.GetComponent<Transform>().localScale = new Vector3(this.squareScale, this.squareScale);
+                newSquare.GetComponent<Transform>().parent = this.squareParent.transform;
 
                 if (i == this.gridSize || j == this.gridSize) {
                     continue;
@@ -76,6 +89,7 @@ public class GameMaster : MonoBehaviour {
 
                 GameMaster.cells[i, j] = (Cell)Instantiate(this.cell, new Vector3(this.GetGridX(j) + (GameMaster.cellSize / 2), this.GetGridY(i) - (GameMaster.cellSize / 2), 2), Quaternion.identity);
                 GameMaster.cells[i, j].GetComponent<Transform>().localScale = new Vector2(GameMaster.cellSize - this.squareScale, GameMaster.cellSize - this.squareScale);
+                GameMaster.cells[i, j].GetComponent<Transform>().parent = this.cellParent.transform;
                 //GameMaster.cells[i, j].GetComponent<BoxCollider2D>().size = new Vector2(1f + this.lineWidth, 1f + this.lineWidth);
                 GameMaster.cells[i, j].column = j;
                 GameMaster.cells[i, j].row = i;
@@ -107,5 +121,55 @@ public class GameMaster : MonoBehaviour {
         } else {
             this.aiScoreText.text = GameMaster.aiScore.ToString();
         }
+
+        if (GameMaster.playerScore + GameMaster.aiScore == this.gridSize * this.gridSize) {
+            GameMaster.isPlayerTurn = true;
+
+            if (GameMaster.playerScore > GameMaster.aiScore) {
+                this.winnerText.text = "Player Wins!";
+            } else if (GameMaster.playerScore < GameMaster.aiScore) {
+                this.winnerText.text = "AI Wins!";
+            } else {
+                this.winnerText.text = "Draw!";
+            }
+
+            Instantiate(this.resetButton, new Vector3(this.transform.position.x, this.yZero - (this.topMargin / 5f)), Quaternion.identity);
+        }
+    }
+
+    public static void ResetGame() {
+        GameMaster.gameMaster.Reset();
+    }
+
+    private void Reset() {
+        foreach (Transform child in this.cellParent.transform) {
+            Destroy(child.gameObject);
+        }
+
+        GameMaster.cells = new Cell[this.gridSize, this.gridSize];
+        for (int i = 0; i <= this.gridSize; i++) {
+            for (int j = 0; j <= this.gridSize; j++) {
+                if (i == this.gridSize || j == this.gridSize) {
+                    continue;
+                }
+
+                GameMaster.cells[i, j] = (Cell)Instantiate(this.cell, new Vector3(this.GetGridX(j) + (GameMaster.cellSize / 2), this.GetGridY(i) - (GameMaster.cellSize / 2), 2), Quaternion.identity);
+                GameMaster.cells[i, j].GetComponent<Transform>().localScale = new Vector2(GameMaster.cellSize - this.squareScale, GameMaster.cellSize - this.squareScale);
+                GameMaster.cells[i, j].GetComponent<Transform>().parent = this.cellParent.transform;
+                //GameMaster.cells[i, j].GetComponent<BoxCollider2D>().size = new Vector2(1f + this.lineWidth, 1f + this.lineWidth);
+                GameMaster.cells[i, j].column = j;
+                GameMaster.cells[i, j].row = i;
+            }
+        }
+
+        GameMaster.playerScore = 0;
+        GameMaster.aiScore = 0;
+
+        this.winnerText.text = "";
+        this.playerScoreText.text = "0";
+        this.aiScoreText.text = "0";
+
+        if (Random.Range(0, 1000) > 499)
+            GameMaster.isPlayerTurn = true;
     }
 }
