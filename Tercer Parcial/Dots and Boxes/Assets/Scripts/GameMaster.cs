@@ -12,6 +12,8 @@ public class GameMaster : MonoBehaviour {
     public static int playerScore;
     public static int aiScore;
 
+    public static float squareSize;
+
     [SerializeField]
     private Camera mainCamera;
 
@@ -80,17 +82,19 @@ public class GameMaster : MonoBehaviour {
         for (int i = 0; i <= this.gridSize; i++) {
             for (int j = 0; j <= this.gridSize; j++) {
                 GameObject newSquare = Instantiate(this.square, new Vector3(this.GetGridX(j), this.GetGridY(i)), Quaternion.identity);
-                newSquare.GetComponent<Transform>().localScale = new Vector3(this.squareScale, this.squareScale);
-                newSquare.GetComponent<Transform>().parent = this.squareParent.transform;
+                newSquare.GetComponent<RectTransform>().localScale = new Vector3(this.squareScale, this.squareScale);
+                newSquare.GetComponent<RectTransform>().SetParent(this.squareParent.transform);
+
+                GameMaster.squareSize = this.squareScale;
 
                 if (i == this.gridSize || j == this.gridSize) {
                     continue;
                 }
 
                 GameMaster.cells[i, j] = (Cell)Instantiate(this.cell, new Vector3(this.GetGridX(j) + (GameMaster.cellSize / 2), this.GetGridY(i) - (GameMaster.cellSize / 2), 2), Quaternion.identity);
-                GameMaster.cells[i, j].GetComponent<Transform>().localScale = new Vector2(GameMaster.cellSize - this.squareScale, GameMaster.cellSize - this.squareScale);
-                GameMaster.cells[i, j].GetComponent<Transform>().parent = this.cellParent.transform;
-                //GameMaster.cells[i, j].GetComponent<BoxCollider2D>().size = new Vector2(1f + this.lineWidth, 1f + this.lineWidth);
+                GameMaster.cells[i, j].GetComponent<RectTransform>().localScale = new Vector2(GameMaster.cellSize - this.squareScale, GameMaster.cellSize - this.squareScale);
+                GameMaster.cells[i, j].GetComponent<RectTransform>().SetParent(this.cellParent.transform);
+                GameMaster.cells[i, j].GetComponent<BoxCollider2D>().size = new Vector2(1.333f, 1.333f);
                 GameMaster.cells[i, j].column = j;
                 GameMaster.cells[i, j].row = i;
             }

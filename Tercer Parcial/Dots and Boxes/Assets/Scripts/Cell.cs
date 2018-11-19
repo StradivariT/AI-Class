@@ -226,14 +226,16 @@ public class Cell : MonoBehaviour {
 
     public void HighlightSide(GameObject prefab, LineTransform line) {
         if (this.playerHighlight != null) {
-            if (this.playerHighlight.transform.position == line.Position)
+            if (this.playerHighlight.GetComponent<RectTransform>().position == line.Position)
                 return;
 
             Destroy(this.playerHighlight);
         }
 
         this.playerHighlight = Instantiate(prefab, line.Position, line.Rotation);
-        this.playerHighlight.transform.parent = GetComponent<Transform>();
+        this.playerHighlight.GetComponent<RectTransform>().SetParent(GetComponent<RectTransform>());
+
+        this.playerHighlight.GetComponent<RectTransform>().localScale = new Vector3(1, 0.333f);
     }
 
     public void DestroyHighlight() {
@@ -245,7 +247,9 @@ public class Cell : MonoBehaviour {
         LineTransform line = this.GetLineTransform(side);
 
         GameObject playerLine = Instantiate(prefab, line.Position, line.Rotation);
-        playerLine.transform.parent = GetComponent<Transform>();
+        playerLine.GetComponent<RectTransform>().SetParent(GetComponent<RectTransform>());
+
+        playerLine.GetComponent<RectTransform>().localScale = new Vector3(1, 0.333f);
 
         bool isNeighbourClosed = false;
         switch(side) {
