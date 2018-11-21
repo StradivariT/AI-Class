@@ -67,16 +67,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerHighlightPrefab: {fileID: 1026908253148816, guid: 0d0ddc02260e54a93af9589b6e7382b8,
     type: 2}
-  aiHighlightPrefab: {fileID: 1037572364665910, guid: a40405a2b7c194836b20ac662785dbf5,
-    type: 2}
-  playerLinePrefab: {fileID: 1403968495083112, guid: bde49ee711e504c99b8dc041bc9840f4,
-    type: 2}
-  aiLinePrefab: {fileID: 1669985555708252, guid: f1546b543c0b548f6bcc2572faa9873f,
+  playerSelectionPrefab: {fileID: 1403968495083112, guid: bde49ee711e504c99b8dc041bc9840f4,
     type: 2}
   playerPoint: {fileID: 21300000, guid: a368e67da801c43b98289d1bf22d52ce, type: 3}
   aiPoint: {fileID: 21300000, guid: 6e58563c38f8342cd933ddbe2aa58c2f, type: 3}
-  row: 0
-  column: 0
 --- !u!212 &212946038012373432
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -134,7 +128,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

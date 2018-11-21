@@ -6,99 +6,99 @@ using DotsAndBoxes;
 // Best-first search
 // Priority 1 - Choose the square that will grant point
 // Priority 2 - Don't choose the square that will give a way a point/s
+//   Check if neighbour will give away a point if a line is put there
 // Priority 3 - No other option to choose, would give away point/s
+//   TODO - Give away as little points as possible
 public class AI : MonoBehaviour {
     [SerializeField]
     private float waitTime;
 
     [SerializeField]
-    private GameObject lineHighlight;
+    private GameObject lineHighlightPrefab;
 
     [SerializeField]
-    private GameObject lineSelection;
+    private GameObject lineSelectionPrefab;
+
+    private GameMaster gameMaster;
 
     private bool isThinking;
 
-    private List<Cell> bestCells;
-    private List<GoodCell> goodCells;
-    private List<Cell> badCells;
+    private const string bestIndex = "best";
+    private const string goodIndex = "good";
+    private const string badIndex = "bad";
 
-	void Start () {
-        this.bestCells = new List<Cell>();
-        this.goodCells = new List<GoodCell>();
-        this.badCells = new List<Cell>();
+	private void Start () {
+        this.gameMaster = (GameMaster)FindObjectOfType(typeof(GameMaster));
 	}
 	
-	void Update () {
-        if (GameMaster.isPlayerTurn || this.isThinking)
+	private void Update () {
+        if (this.gameMaster.IsPlayerTurn || this.isThinking)
             return;
 
         this.isThinking = true;
-        this.EvaluateCells();
+        this.DetermineSelection();
 	}
 
-    private void EvaluateCells() {
-        this.bestCells = new List<Cell>();
-        this.goodCells = new List<GoodCell>();
-        this.badCells = new List<Cell>();
+    private void DetermineSelection() {
+        Dictionary<string, List<AICell>> cellsByPriority = new Dictionary<string, List<AICell>> {
+            { AI.bestIndex, new List<AICell>() },
+            { AI.goodIndex, new List<AICell>() },
+            { AI.badIndex, new List<AICell>() }
+        };
 
-        for (int i = 0; i < GameMaster.cells.GetLength(0); i++) {
-            for (int j = 0; j < GameMaster.cells.GetLength(1); j++) {
-                if (GameMaster.cells[i, j].IsClosed())
+        for (int i = 0; i < this.gameMaster.Cells.Count; i++) {
+            for (int j = 0; j < this.gameMaster.Cells.Count; j++) {
+                if (this.gameMaster.Cells[i][j].IsClosed())
                     continue;
-
-                List<CellSide> freeSides = GameMaster.cells[i, j].GetFreeSides();
-
+                
+                List<CellSide> freeSides = this.gameMaster.Cells[i][j].GetFreeSides();
                 switch(freeSides.Count) {
                     case 1:
-                        this.bestCells.Add(GameMaster.cells[i, j]);
+                        cellsByPriority[AI.bestIndex].Add(new AICell(this.gameMaster.Cells[i][j], freeSides));
                         break;
 
                     case 3:
                     case 4:
-                        List<CellSide> validNeighbourSides = GameMaster.cells[i, j].GetValidNeighbourSides();
+                        List<CellSide> validNeighbourSides = this.gameMaster.Cells[i][j].GetValidNeighbourSides();
                         if(validNeighbourSides.Count == 0) {
-                            this.badCells.Add(GameMaster.cells[i, j]);
+                            cellsByPriority[AI.badIndex].Add(new AICell(this.gameMaster.Cells[i][j], freeSides));
                             break;
                         }
 
-                        this.goodCells.Add(new GoodCell(GameMaster.cells[i, j], validNeighbourSides));
+                        cellsByPriority[AI.goodIndex].Add(new AICell(this.gameMaster.Cells[i][j], validNeighbourSides));
                         break;
 
                     case 2:
-                        this.badCells.Add(GameMaster.cells[i, j]);
+                        cellsByPriority[AI.badIndex].Add(new AICell(this.gameMaster.Cells[i][j], freeSides));
                         break;
                 }
             }
         }
 
-        Cell selected;
-        CellSide side;
-        if(this.bestCells.Count > 0) {
-            selected = this.bestCells[(int)Random.Range(0, this.bestCells.Count)];
-            side = selected.GetFreeSides()[(int)Random.Range(0, selected.GetFreeSides().Count)];
-        } else if (this.goodCells.Count > 0) {
-            int selectedIndex = (int)Random.Range(0, this.goodCells.Count);
+        string selectedKey;
+        if(cellsByPriority[AI.bestIndex].Count > 0)
+            selectedKey = AI.bestIndex;
+        else if(cellsByPriority[AI.goodIndex].Count > 0)
+            selectedKey = AI.goodIndex;
+        else
+            selectedKey = AI.badIndex;
 
-            selected = this.goodCells[selectedIndex].cell;
-            side = this.goodCells[selectedIndex].validSides[(int)Random.Range(0, this.goodCells[selectedIndex].validSides.Count)];
-        } else {
-            selected = this.badCells[(int)Random.Range(0, this.badCells.Count)];
-            side = selected.GetFreeSides()[(int)Random.Range(0, selected.GetFreeSides().Count)];
-        }
+        int selectionIndex = (int)Random.Range(0, cellsByPriority[selectedKey].Count);
+        Cell selection = cellsByPriority[selectedKey][selectionIndex].Cell;
 
-        LineTransform transf = selected.GetLineTransform(side);
+        int sideIndex = (int)Random.Range(0, cellsByPriority[selectedKey][selectionIndex].Sides.Count);
+        CellSide side = cellsByPriority[selectedKey][selectionIndex].Sides[sideIndex];
 
-        selected.HighlightSide(this.lineHighlight, transf);
-
-        StartCoroutine(MakeMove(selected, side));
+        selection.HighlightSide(this.lineHighlightPrefab, selection.GetLineTransform(side));
+        StartCoroutine(MakeSelection(selection, side));
     }
 
-    IEnumerator MakeMove(Cell selected, CellSide side) {
+    IEnumerator MakeSelection(Cell cell, CellSide side) {
         yield return new WaitForSeconds(this.waitTime);
 
-        selected.DestroyHighlight();
-        selected.SelectSide(this.lineSelection, side);
+        cell.DestroyHighlight();
+        cell.SelectSide(this.lineSelectionPrefab, side);
+
         this.isThinking = false;
     }
 }

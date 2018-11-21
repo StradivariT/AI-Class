@@ -15,13 +15,13 @@ namespace DotsAndBoxes {
         public Quaternion Rotation;
     }
 
-    public struct GoodCell {
-        public List<CellSide> validSides;
-        public Cell cell;
+    public struct AICell {
+        public List<CellSide> Sides;
+        public Cell Cell;
 
-        public GoodCell(Cell cell, List<CellSide> sides) {
-            this.cell = cell;
-            this.validSides = sides;
+        public AICell(Cell cell, List<CellSide> sides) {
+            this.Cell = cell;
+            this.Sides = sides;
         }
     }
 }
