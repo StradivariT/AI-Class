@@ -832,11 +832,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8800c2bc15c934781b6a5aee03bd6afc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waitTime: 1
+  selectionWaitTime: 1
   lineHighlightPrefab: {fileID: 1037572364665910, guid: a40405a2b7c194836b20ac662785dbf5,
     type: 2}
   lineSelectionPrefab: {fileID: 1669985555708252, guid: f1546b543c0b548f6bcc2572faa9873f,
     type: 2}
+  difficulty: 1
 --- !u!4 &2051076827
 Transform:
   m_ObjectHideFlags: 0

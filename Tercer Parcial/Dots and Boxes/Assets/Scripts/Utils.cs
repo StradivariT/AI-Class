@@ -10,6 +10,12 @@ namespace DotsAndBoxes {
         Top
     }
 
+    public enum Difficulty {
+        Easy,
+        Normal,
+        Hard
+    }
+
     public struct LineTransform {
         public Vector3 Position;
         public Quaternion Rotation;
@@ -23,5 +29,10 @@ namespace DotsAndBoxes {
             this.Cell = cell;
             this.Sides = sides;
         }
+    }
+
+    public struct ShortestRegion {
+        public AICell AICell;
+        public int Length;
     }
 }

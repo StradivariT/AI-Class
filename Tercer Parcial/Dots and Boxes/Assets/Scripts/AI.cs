@@ -3,21 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using DotsAndBoxes;
 
-// Best-first search
+// Best-first search, production rules sort of thing?
 // Priority 1 - Choose the square that will grant point
+
 // Priority 2 - Don't choose the square that will give a way a point/s
 //   Check if neighbour will give away a point if a line is put there
+
 // Priority 3 - No other option to choose, would give away point/s
 //   TODO - Give away as little points as possible
 public class AI : MonoBehaviour {
     [SerializeField]
-    private float waitTime;
+    [Range(0, 5)]
+    private float selectionWaitTime;
 
     [SerializeField]
     private GameObject lineHighlightPrefab;
 
     [SerializeField]
     private GameObject lineSelectionPrefab;
+
+    [SerializeField]
+    private Difficulty difficulty;
 
     private GameMaster gameMaster;
 
@@ -59,6 +65,11 @@ public class AI : MonoBehaviour {
 
                     case 3:
                     case 4:
+                        if (this.difficulty == Difficulty.Easy) {
+                            cellsByPriority[AI.goodIndex].Add(new AICell(this.gameMaster.Cells[i][j], freeSides));
+                            break;
+                        }
+
                         List<CellSide> validNeighbourSides = this.gameMaster.Cells[i][j].GetValidNeighbourSides();
                         if(validNeighbourSides.Count == 0) {
                             cellsByPriority[AI.badIndex].Add(new AICell(this.gameMaster.Cells[i][j], freeSides));
@@ -76,12 +87,16 @@ public class AI : MonoBehaviour {
         }
 
         string selectedKey;
-        if(cellsByPriority[AI.bestIndex].Count > 0)
+        if(cellsByPriority[AI.bestIndex].Count > 0) {
             selectedKey = AI.bestIndex;
-        else if(cellsByPriority[AI.goodIndex].Count > 0)
+        } else if(cellsByPriority[AI.goodIndex].Count > 0) {
             selectedKey = AI.goodIndex;
-        else
+        } else {
             selectedKey = AI.badIndex;
+
+            if (this.difficulty == Difficulty.Hard)
+                cellsByPriority[AI.badIndex] = new List<AICell> { this.FilterBadCells(cellsByPriority[AI.badIndex]) };
+        }
 
         int selectionIndex = (int)Random.Range(0, cellsByPriority[selectedKey].Count);
         Cell selection = cellsByPriority[selectedKey][selectionIndex].Cell;
@@ -93,8 +108,82 @@ public class AI : MonoBehaviour {
         StartCoroutine(MakeSelection(selection, side));
     }
 
+    private AICell FilterBadCells(List<AICell> aiCells) {
+        ShortestRegion shortestRegion = new ShortestRegion();
+        shortestRegion.Length = 10000;
+
+        foreach(AICell aiCell in aiCells) {
+            int regionLength = this.RegionCount(aiCell.Cell, aiCell.Sides);
+
+            if (regionLength < shortestRegion.Length) {
+                shortestRegion.AICell = aiCell;
+                shortestRegion.Length = regionLength;
+            }
+        }
+
+        return shortestRegion.AICell;
+    }
+
+    private int RegionCount(Cell cell, List<CellSide> openSides) {
+        int regionCount = 1;
+
+        foreach(CellSide side in openSides) {
+            Cell neighbour = null;
+            List<CellSide> sides = null;
+
+            switch(side) {
+                case CellSide.Left:
+                    if (cell.Column == 0)
+                        break;
+
+                    neighbour = this.gameMaster.Cells[cell.Row][cell.Column - 1];
+                    sides = neighbour.GetFreeSides();
+                    sides.Remove(CellSide.Right);
+
+                    break;
+
+                case CellSide.Right:
+                    if (cell.Column == this.gameMaster.Cells.Count - 1)
+                        break;
+
+                    neighbour = this.gameMaster.Cells[cell.Row][cell.Column + 1];
+                    sides = neighbour.GetFreeSides();
+                    sides.Remove(CellSide.Left);
+
+                    break;
+                    
+                case CellSide.Bottom:
+                    if (cell.Row == this.gameMaster.Cells.Count - 1)
+                        break;
+
+                    neighbour = this.gameMaster.Cells[cell.Row + 1][cell.Column];
+                    sides = neighbour.GetFreeSides();
+                    sides.Remove(CellSide.Top);
+
+                    break;
+                    
+                case CellSide.Top:
+                    if (cell.Row == 0)
+                        break;
+
+                    neighbour = this.gameMaster.Cells[cell.Row - 1][cell.Column];
+                    sides = neighbour.GetFreeSides();
+                    sides.Remove(CellSide.Bottom);
+
+                    break;
+            }
+
+            if (neighbour == null)
+                continue;
+
+            regionCount += this.RegionCount(neighbour, sides);
+        }
+
+        return regionCount;
+    }
+
     IEnumerator MakeSelection(Cell cell, CellSide side) {
-        yield return new WaitForSeconds(this.waitTime);
+        yield return new WaitForSeconds(this.selectionWaitTime);
 
         cell.DestroyHighlight();
         cell.SelectSide(this.lineSelectionPrefab, side);
