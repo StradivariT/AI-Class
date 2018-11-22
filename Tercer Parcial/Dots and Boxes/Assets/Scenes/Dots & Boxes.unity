@@ -837,7 +837,7 @@ MonoBehaviour:
     type: 2}
   lineSelectionPrefab: {fileID: 1669985555708252, guid: f1546b543c0b548f6bcc2572faa9873f,
     type: 2}
-  difficulty: 1
+  difficulty: 2
 --- !u!4 &2051076827
 Transform:
   m_ObjectHideFlags: 0

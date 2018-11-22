@@ -13,7 +13,8 @@ namespace DotsAndBoxes {
     public enum Difficulty {
         Easy,
         Normal,
-        Hard
+        Hard,
+        Insane
     }
 
     public struct LineTransform {

@@ -5,7 +5,7 @@ using UnityEngine;
 public class Reset : MonoBehaviour {
     private GameMaster gameMaster;
 
-    private void Start() {
+    private void Awake() {
         this.gameMaster = (GameMaster)FindObjectOfType(typeof(GameMaster));
     }
 

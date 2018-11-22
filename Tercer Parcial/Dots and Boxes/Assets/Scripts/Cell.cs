@@ -35,9 +35,11 @@ public class Cell : MonoBehaviour {
     public int Row { get; set; }
     public int Column { get; set; }
 
-    private void Start() {
+    private void Awake() {
         this.gameMaster = (GameMaster)FindObjectOfType(typeof(GameMaster));
+    }
 
+    private void Start() {
         this.left = new Vector3(this.transform.position.x - (this.gameMaster.CellSize / 2f), this.transform.position.y, 2f);
         this.right = this.left + (Vector3.right * this.gameMaster.CellSize);
 

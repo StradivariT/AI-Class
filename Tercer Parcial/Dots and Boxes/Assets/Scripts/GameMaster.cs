@@ -81,7 +81,8 @@ public class GameMaster : MonoBehaviour {
             }
         }
 
-        this.IsPlayerTurn |= Random.Range(0, 1000) > 499;
+        //this.IsPlayerTurn = Random.Range(0, 1000) > 499;
+        this.IsPlayerTurn = true;
     }
 
     private void InstantiateSquare(int column, int row) {

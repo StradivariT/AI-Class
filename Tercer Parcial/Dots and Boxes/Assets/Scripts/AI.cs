@@ -10,7 +10,10 @@ using DotsAndBoxes;
 //   Check if neighbour will give away a point if a line is put there
 
 // Priority 3 - No other option to choose, would give away point/s
-//   TODO - Give away as little points as possible
+//   Give away as little points as possible
+
+// TODO - Assert double cross
+// TODO - If there are more than one "broken" chain of length 3 or more, leave two
 public class AI : MonoBehaviour {
     [SerializeField]
     [Range(0, 5)]
@@ -33,19 +36,21 @@ public class AI : MonoBehaviour {
     private const string goodIndex = "good";
     private const string badIndex = "bad";
 
-	private void Start () {
+	private void Awake() {
         this.gameMaster = (GameMaster)FindObjectOfType(typeof(GameMaster));
 	}
 	
-	private void Update () {
-        if (this.gameMaster.IsPlayerTurn || this.isThinking)
+	private void Update() {
+        if (this.gameMaster.IsPlayerTurn || this.isThinking || this.gameMaster.Cells == null)
             return;
 
         this.isThinking = true;
-        this.DetermineSelection();
+        StartCoroutine(this.DetermineSelection());
 	}
 
-    private void DetermineSelection() {
+    private IEnumerator DetermineSelection() {
+        yield return new WaitForSeconds(0.1f);
+
         Dictionary<string, List<AICell>> cellsByPriority = new Dictionary<string, List<AICell>> {
             { AI.bestIndex, new List<AICell>() },
             { AI.goodIndex, new List<AICell>() },
@@ -94,8 +99,13 @@ public class AI : MonoBehaviour {
         } else {
             selectedKey = AI.badIndex;
 
-            if (this.difficulty == Difficulty.Hard)
+            if (this.difficulty == Difficulty.Hard) {
                 cellsByPriority[AI.badIndex] = new List<AICell> { this.FilterBadCells(cellsByPriority[AI.badIndex]) };
+            }
+
+            //if (this.difficulty == Difficulty.Insane) {
+            //    cellsByPriority[AI.badIndex] = new List<AICell> { this.GetBestMove() };
+            //}
         }
 
         int selectionIndex = (int)Random.Range(0, cellsByPriority[selectedKey].Count);
@@ -108,12 +118,21 @@ public class AI : MonoBehaviour {
         StartCoroutine(MakeSelection(selection, side));
     }
 
+    //private AICell GetBestMove() {
+        
+    //}
+
     private AICell FilterBadCells(List<AICell> aiCells) {
         ShortestRegion shortestRegion = new ShortestRegion();
         shortestRegion.Length = 10000;
 
+        List<Cell> visitedCells = new List<Cell>();
+
         foreach(AICell aiCell in aiCells) {
-            int regionLength = this.RegionCount(aiCell.Cell, aiCell.Sides);
+            if (visitedCells.Contains(aiCell.Cell))
+                continue;
+
+            int regionLength = this.RegionCount(aiCell.Cell, aiCell.Sides, visitedCells);
 
             if (regionLength < shortestRegion.Length) {
                 shortestRegion.AICell = aiCell;
@@ -124,8 +143,10 @@ public class AI : MonoBehaviour {
         return shortestRegion.AICell;
     }
 
-    private int RegionCount(Cell cell, List<CellSide> openSides) {
+    private int RegionCount(Cell cell, List<CellSide> openSides, List<Cell> visitedCells) {
         int regionCount = 1;
+
+        visitedCells.Add(cell);
 
         foreach(CellSide side in openSides) {
             Cell neighbour = null;
@@ -176,7 +197,7 @@ public class AI : MonoBehaviour {
             if (neighbour == null)
                 continue;
 
-            regionCount += this.RegionCount(neighbour, sides);
+            regionCount += this.RegionCount(neighbour, sides, visitedCells);
         }
 
         return regionCount;
