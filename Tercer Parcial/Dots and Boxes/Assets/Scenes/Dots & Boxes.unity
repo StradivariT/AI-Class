@@ -294,7 +294,7 @@ MonoBehaviour:
     type: 2}
   cellPrefab: {fileID: 114382309139319668, guid: 8865d374279cd4831a4fcb1a04d6bccb,
     type: 2}
-  gridSize: 3
+  gridSize: 4
   playerScoreText: {fileID: 1338635201}
   aiScoreText: {fileID: 276266867}
   winnerText: {fileID: 633289483}
@@ -837,7 +837,7 @@ MonoBehaviour:
     type: 2}
   lineSelectionPrefab: {fileID: 1669985555708252, guid: f1546b543c0b548f6bcc2572faa9873f,
     type: 2}
-  difficulty: 2
+  difficulty: 3
 --- !u!4 &2051076827
 Transform:
   m_ObjectHideFlags: 0

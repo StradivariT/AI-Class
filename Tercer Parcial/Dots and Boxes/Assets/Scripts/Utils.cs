@@ -32,6 +32,16 @@ namespace DotsAndBoxes {
         }
     }
 
+    public struct ChainCell {
+        public AICell AICell;
+        public int length;
+
+        public ChainCell(AICell cell, int length) {
+            this.AICell = cell;
+            this.length = length;
+        }
+    }
+
     public struct ShortestRegion {
         public AICell AICell;
         public int Length;
