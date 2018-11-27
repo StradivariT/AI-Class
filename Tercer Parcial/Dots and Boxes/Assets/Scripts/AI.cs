@@ -123,7 +123,7 @@ public class AI : MonoBehaviour {
             }
 
             if (this.difficulty == Difficulty.Insane) {
-                cellsByPriority[AI.badIndex] = new List<AICell> { this.DoubleCross() };
+                cellsByPriority[AI.badIndex] = new List<AICell> { this.DoubleCross(cellsByPriority[AI.badIndex][0]) };
             }
         }
 
@@ -160,8 +160,18 @@ public class AI : MonoBehaviour {
                 return new AICell(null, null);
             }
 
-            if (this.isClosingInChain)
-                return new AICell(null, null);
+            if (this.isClosingInChain) {
+                bool doDoubleCross = false;
+                for (int i = 0; i < this.chainCells.Count; i++) {
+                    if(this.chainCells[i].length == 2) {
+                        doDoubleCross = true;
+                        break;
+                    }
+                }
+
+                if(!doDoubleCross)
+                    return new AICell(null, null);
+            }
         }
 
         this.isClosingInChain = false;
@@ -234,7 +244,7 @@ public class AI : MonoBehaviour {
         return new AICell(chainCell.Cell, resultSides);
     }
 
-    private AICell DoubleCross() {
+    private AICell DoubleCross(AICell originalSelection) {
         bool HasDoubleCross = false;
         int priorityCellIndex = 0;
         for (int i = 0; i < this.chainCells.Count; i++) {
@@ -245,13 +255,10 @@ public class AI : MonoBehaviour {
                 HasDoubleCross = true;
                 priorityCellIndex = i;
             }
-
-            if(!HasDoubleCross)
-                priorityCellIndex = i;
         }
 
         if (!HasDoubleCross)
-            return this.chainCells[priorityCellIndex].AICell;
+            return originalSelection;
 
         AICell doubleCell = this.chainCells[priorityCellIndex].AICell;
 
@@ -282,6 +289,7 @@ public class AI : MonoBehaviour {
                 continue;
             
             int regionLength = this.RegionCount(aiCell.Cell, aiCell.Sides, visitedCells);
+
             this.chainCells.Add(new ChainCell(aiCell, regionLength));
 
             if (regionLength < shortestRegion.Length) {
@@ -295,6 +303,9 @@ public class AI : MonoBehaviour {
 
     private int RegionCount(Cell cell, List<CellSide> openSides, List<Cell> visitedCells) {
         int regionCount = 1;
+
+        if (visitedCells.Contains(cell))
+            return 0;
 
         visitedCells.Add(cell);
 

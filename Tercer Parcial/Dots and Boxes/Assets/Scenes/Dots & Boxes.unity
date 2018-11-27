@@ -294,7 +294,7 @@ MonoBehaviour:
     type: 2}
   cellPrefab: {fileID: 114382309139319668, guid: 8865d374279cd4831a4fcb1a04d6bccb,
     type: 2}
-  gridSize: 4
+  gridSize: 5
   playerScoreText: {fileID: 1338635201}
   aiScoreText: {fileID: 276266867}
   winnerText: {fileID: 633289483}
